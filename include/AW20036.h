@@ -153,6 +153,20 @@ typedef struct AW20036LEDEN {
 
 } AW20036LEDEnable;
 
+/// @brief 
+typedef struct AW20036PATTERN {
+
+    uint8_t fade_low;
+    uint8_t fade_high;
+    AW20036Time rise_time;
+    AW20036Time fall_time;
+    AW20036Time on_time;
+    AW20036Time off_time;
+
+    AW20036LoopStart loop_start;
+
+} AW20036Patten;
+
 typedef struct AW20036DIMFADE {
 
     uint8_t dim: 6;
@@ -203,37 +217,6 @@ AW20036* AW20036Init(const AW20036HAL* const hal, const AW20036Address addr);
  * @param dev 
  */
 void AW23006Deinit(AW23006* const dev);
-
-/**
- * @brief 
- * 
- * @param dev 
- * @param page 
- * @return uint32_t 
- */
-uint32_t AW23006SelectPage(const AW23006* const dev, const AW20036Page page);
-
-/**
- * @brief 
- * 
- * @param dev 
- * @param addr 
- * @param data 
- * @param size 
- * @return uint32_t 
- */
-uint32_t AW20036WriteData(const AW20036* const dev, const uint8_t addr, const void* const data, const uint32_t size);
-
-/**
- * @brief 
- * 
- * @param dev 
- * @param addr 
- * @param output 
- * @param size 
- * @return uint32_t 
- */
-uint32_t AW20036ReadData(const AW20036* const dev, const uint8_t addr, void* const output, const uint32_t size);
 
 /**
  * @brief 
@@ -301,5 +284,38 @@ uint32_t AW20036WriteLEDDim(const AW20036* const dev, const uint8_t led, const u
  * @return uint32_t 
  */
 uint32_t AW20036WriteLEDsPatDimFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const AW20036PatDimFade* const pat_dim_fade);
+
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param page 
+ * @return uint32_t 
+ */
+uint32_t AW23006SelectPage(const AW23006* const dev, const AW20036Page page);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param addr 
+ * @param data 
+ * @param size 
+ * @return uint32_t 
+ */
+uint32_t AW20036WriteData(const AW20036* const dev, const uint8_t addr, const void* const data, const uint32_t size);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param addr 
+ * @param output 
+ * @param size 
+ * @return uint32_t 
+ */
+uint32_t AW20036ReadData(const AW20036* const dev, const uint8_t addr, void* const output, const uint32_t size);
+
 
 #endif // include guard
