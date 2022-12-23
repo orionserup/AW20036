@@ -23,12 +23,12 @@
 /// @brief 
 typedef enum AW20036PAGE {
 
-    AW20036_FUNCTION_PAGE           = 0x00,
-    AWS20036_DIM_CURR_PAGE          = 0x01,
-    AW20036_FADE_CURR_PAGE          = 0x02,
-    AW20036_PATTERN_SEL_PAGE        = 0x03,
-    AW20036_DIM_FADE_PAGE           = 0x04,
-    AW20036_DIM_PATTERN_FADE_PAGE   = 0x05
+    AW20036_FUNCTION_PAGE           = 0xC0,
+    AWS20036_DIM_CURR_PAGE          = 0xC1,
+    AW20036_FADE_CURR_PAGE          = 0xC2,
+    AW20036_PATTERN_SEL_PAGE        = 0xC3,
+    AW20036_DIM_FADE_PAGE           = 0xC4,
+    AW20036_DIM_PATTERN_FADE_PAGE   = 0xC5
 
 } AW20036Page;
 
@@ -217,6 +217,28 @@ uint32_t AW23006SelectPage(const AW23006* const dev, const AW20036Page page);
  * @brief 
  * 
  * @param dev 
+ * @param addr 
+ * @param data 
+ * @param size 
+ * @return uint32_t 
+ */
+uint32_t AW20036WriteData(const AW20036* const dev, const uint8_t addr, const void* const data, const uint32_t size);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param addr 
+ * @param output 
+ * @param size 
+ * @return uint32_t 
+ */
+uint32_t AW20036ReadData(const AW20036* const dev, const uint8_t addr, void* const output, const uint32_t size);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
  * @return uint32_t 
  */
 uint32_t AW20036SWReset(const AW20036* const dev);
@@ -267,6 +289,17 @@ uint32_t AW20036WriteLEDFade(const AW20036* const dev, const uint8_t led, const 
  * @param dim 
  * @return uint32_t 
  */
-uint32_t AW20036WriteLEDDIM(const AW20036* const dev, const uint8_t led, const uint8_t dim);
+uint32_t AW20036WriteLEDDim(const AW20036* const dev, const uint8_t led, const uint8_t dim);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param led_low 
+ * @param led_high 
+ * @param pat_dim_fade 
+ * @return uint32_t 
+ */
+uint32_t AW20036WriteLEDsPatDimFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const AW20036PatDimFade* const pat_dim_fade);
 
 #endif // include guard
