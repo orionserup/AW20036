@@ -141,8 +141,27 @@ typedef enum AW20036LOOPSTART {
 
 } AW20036LoopStart;
 
+typedef enum AW20036FADEWIDTH {
+
+    AW20036_FADE_6B = 0x1,
+    AW20036_FADE_8B = 0x0
+
+} AW20036FadeWidth;
+
+typedef struct AW20036FAULTCONFIG {
+
+    bool otp_det_en : 1;
+    bool otp_prot_en : 1;
+    bool otp_int_en : 1;
+    bool uvlo_det_en : 1;
+    bool uvlo_prot_en : 1;
+    bool uvlo_int_en : 1;
+    uint8_t uvlo_level : 2;
+
+} AW20036FaultConfig;
+
 /// @brief 
-typedef struct AW20036LEDEN {
+typedef struct AW20036LEDSTATE {
 
     uint8_t en0_5   : 6;
     uint8_t en6_11  : 6;
@@ -151,21 +170,35 @@ typedef struct AW20036LEDEN {
     uint8_t en24_29 : 6;
     uint8_t en30_25 : 6;
 
-} AW20036LEDEnable;
+} AW20036LEDState;
 
 /// @brief 
 typedef struct AW20036PATTERN {
 
-    uint8_t fade_low;
-    uint8_t fade_high;
-    AW20036Time rise_time;
-    AW20036Time fall_time;
-    AW20036Time on_time;
-    AW20036Time off_time;
+    uint8_t fade_low;           ///< The Low fade value, detemines the off value of the LED
+    uint8_t fade_high;          ///< The High fade value, determines the on value of the LED
+    AW20036Time rise_time;      ///< How long it takes the LED going from off to on
+    AW20036Time fall_time;      ///< How long it takes the LED going from on to off
+    AW20036Time on_time;        ///< How much time the LED stays om
+    AW20036Time off_time;       ///< How much time the led stays off
 
-    AW20036LoopStart loop_start;
+    AW20036LoopStart loop_start;///< Where to  start the pattern
+    bool loop_end_on;           ///< If the loop ends with the led being on
+    uint16_t num_loops;         ///< Number of times to loop the pattern, if it is zero it loops forever
 
-} AW20036Patten;
+} AW20036Pattern;
+
+typedef struct AW20036PATTERNSSTATE {
+
+    bool pattern0_en : 1;
+    bool pattern1_en : 1;
+    bool pattern2_en : 1;
+
+    bool pattern0_int_en : 1;
+    bool pattern1_int_en : 1;
+    bool pattern2_int_en : 1;
+
+} AW20036PatternsState;
 
 typedef struct AW20036DIMFADE {
 
@@ -186,10 +219,10 @@ typedef struct AW20036PATDIMFADE {
 typedef struct AW20036HAL {
 
     /// @brief Writes to a device register from an I2C Master
-    uint32_t (*i2c_reg_write)(const uint8_t s_addr, const uint8_t reg, const void* const data, const uint32_t size);
+    uint8_t (*i2c_reg_write)(const uint8_t s_addr, const uint8_t reg, const void* const data, const uint8_t size);
 
     /// @brief Reads from a device register from an I2C Master
-    uint32_t (*i2c_reg_read)(const uint8_t s_addr, const uint8_t reg, void* const output, const uint32_t size);
+    uint8_t (*i2c_reg_read)(const uint8_t s_addr, const uint8_t reg, void* const output, const uint8_t size);
 
 } AW20036HAL;
 
@@ -202,38 +235,141 @@ typedef struct AW20036 {
 
 } AW20036;
 
+// ------------------------------------------- Init and Deinit --------------------------------------- //
+
 /**
  * @brief 
  * 
- * @param hal 
- * @param addr 
- * @return AW20036* 
+ * @param[out] dev: Device to initialize
+ * @param[in] hal: HAL to initialize the device with 
+ * @param[in] addr: The Address pin configuration, determines i2c address 
+ * @param[in] num_columns: The number of columns that are being run with the driver
+ * @return AW20036*: An Inited device, NULL if there was any issue with the init procedure
  */
-AW20036* AW20036Init(const AW20036HAL* const hal, const AW20036Address addr);
+AW20036* AW20036Init(AW20036* const dev, const AW20036HAL* const hal, const AW20036Address addr, const uint8_t num_columns);
 
 /**
  * @brief 
  * 
  * @param dev 
  */
-void AW23006Deinit(AW23006* const dev);
+void AW23006Deinit(AW20036* const dev);
+
+// --------------------------------------------- Basic Helper Functions ---------------------------------------- //
 
 /**
  * @brief 
  * 
  * @param dev 
- * @return uint32_t 
+ * @param page 
+ * @return uint8_t 
  */
-uint32_t AW20036SWReset(const AW20036* const dev);
+uint8_t AW23006SelectPage(const AW20036* const dev, const AW20036Page page);
+
+/**
+ * @brief 
+ * 
+ * @param sleep 
+ * @return uint8_t 
+ */
+uint8_t AW20036SetSleep(const bool sleep);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @return uint8_t 
+ */
+uint8_t AW20036SWReset(const AW20036* const dev);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @return uint8_t 
+ */
+uint8_t AW20036ClearLEDs(const AW20036* const dev);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @return uint8_t 
+ */
+uint8_t AW20036ReadID(const AW20036* const dev);
+
+// ----------------------------------------- Configuration Functions ---------------------------------------------- //
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param config 
+ * @return uint8_t 
+ */
+uint8_t AW20036ConfigFaultDet(const AW20036* const dev, const AW20036FaultConfig config);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param clkio_out 
+ * @param use_clkio 
+ * @return uint8_t 
+ */
+uint8_t AW20036ConfigClock(const AW20036* const dev, const bool clkio_out, const bool use_clkio);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param f_width 
+ * @param max_current 
+ * @param all_on 
+ * @return uint8_t 
+ */
+uint8_t AW20036WriteConfig(const AW20036* const dev, const AW20036FadeWidth f_width, const AW20036Current max_current, const bool all_on)
+
+// ----------------------------------------------- Pattern Functions ------------------------------------------ //
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param pattern 
+ * @param pattern 
+ * @return uint8_t 
+ */
+uint8_t AW20036PatternConfigure(const AW20036* const dev, const uint8_t pattern, const AW20036Pattern* const pattern);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param pattern 
+ * @return uint8_t 
+ */
+uint8_t AW20036StartPattern(const AW20036* const dev, const uint8_t pattern);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param state 
+ * @return uint8_t 
+ */
+uint8_t AW20036PatternsSetState(const AW20036* const dev, const AW20036PatternsState state);
+
+// --------------------------------------------------- LED State State Setting Functions ---------------------------------------------- //
 
 /**
  * @brief 
  * 
  * @param dev 
  * @param en 
- * @return uint32_t 
+ * @return uint8_t 
  */
-uint32_t AW20036EnableLEDs(const AW20036* const dev, const AW23006LEDEnable* const en);
+uint8_t AW20036SetLEDsState(const AW20036* const dev, const AW20036LEDState* const state);
 
 /**
  * @brief 
@@ -241,7 +377,41 @@ uint32_t AW20036EnableLEDs(const AW20036* const dev, const AW23006LEDEnable* con
  * @param dev 
  * @return uint32_t 
  */
-uint32_t AW20036EnableAllLEDs(const AW20036* const dev);
+uint8_t AW20036EnableAllLEDs(const AW20036* const dev);
+
+// --------------------------------------------------- LED Value Setting Functions ------------------------------------------ //
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param led 
+ * @param fade 
+ * @return uint8_t 
+ */
+uint8_t AW20036WriteLEDFade(const AW20036* const dev, const uint8_t led, const uint8_t fade);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param led 
+ * @param dim 
+ * @return uint8_t 
+ */
+uint8_t AW20036WriteLEDDim(const AW20036* const dev, const uint8_t led, const uint8_t dim);
+
+/**
+ * @brief 
+ * 
+ * @param dev 
+ * @param led 
+ * @param fade 
+ * @return uint8_t 
+ */
+uint8_t AW20036WriteLEDPat(const AW20036* const dev, const uint8_t led, const uint8_t pattern);
+
+// --------------------------------------------------- LEDs Value Setting Function ------------------------------------------- //
 
 /**
  * @brief 
@@ -250,29 +420,20 @@ uint32_t AW20036EnableAllLEDs(const AW20036* const dev);
  * @param led_low 
  * @param led_high 
  * @param fade 
- * @return uint32_t 
+ * @return uint8_t 
  */
-uint32_t AW20036WriteLEDsFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const uint8_t* const fade);
+uint8_t AW20036WriteLEDsFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const uint8_t* const fade);
 
 /**
  * @brief 
  * 
  * @param dev 
- * @param led 
- * @param fade 
- * @return uint32_t 
+ * @param led_low 
+ * @param led_high 
+ * @param dim_fade 
+ * @return uint8_t 
  */
-uint32_t AW20036WriteLEDFade(const AW20036* const dev, const uint8_t led, const uint8_t fade);
-
-/**
- * @brief 
- * 
- * @param dev 
- * @param led 
- * @param dim 
- * @return uint32_t 
- */
-uint32_t AW20036WriteLEDDim(const AW20036* const dev, const uint8_t led, const uint8_t dim);
+uint8_t AW20036WriteLEDsFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const AW20036DimFade* const dim_fade);
 
 /**
  * @brief 
@@ -281,19 +442,12 @@ uint32_t AW20036WriteLEDDim(const AW20036* const dev, const uint8_t led, const u
  * @param led_low 
  * @param led_high 
  * @param pat_dim_fade 
- * @return uint32_t 
+ * @return uint8_t 
  */
-uint32_t AW20036WriteLEDsPatDimFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const AW20036PatDimFade* const pat_dim_fade);
+uint8_t AW20036WriteLEDsPatDimFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const AW20036PatDimFade* const pat_dim_fade);
 
 
-/**
- * @brief 
- * 
- * @param dev 
- * @param page 
- * @return uint32_t 
- */
-uint32_t AW23006SelectPage(const AW23006* const dev, const AW20036Page page);
+// --------------------------------------------------------- Low Level Exposed API ------------------------------------------- //
 
 /**
  * @brief 
@@ -302,9 +456,9 @@ uint32_t AW23006SelectPage(const AW23006* const dev, const AW20036Page page);
  * @param addr 
  * @param data 
  * @param size 
- * @return uint32_t 
+ * @return uint8_t 
  */
-uint32_t AW20036WriteData(const AW20036* const dev, const uint8_t addr, const void* const data, const uint32_t size);
+uint8_t AW20036WriteData(const AW20036* const dev, const uint8_t addr, const void* const data, const uint8_t size);
 
 /**
  * @brief 
@@ -313,9 +467,8 @@ uint32_t AW20036WriteData(const AW20036* const dev, const uint8_t addr, const vo
  * @param addr 
  * @param output 
  * @param size 
- * @return uint32_t 
+ * @return uint8_t 
  */
-uint32_t AW20036ReadData(const AW20036* const dev, const uint8_t addr, void* const output, const uint32_t size);
-
+uint8_t AW20036ReadData(const AW20036* const dev, const uint8_t addr, void* const output, const uint8_t size);
 
 #endif // include guard
