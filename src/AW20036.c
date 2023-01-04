@@ -1,7 +1,7 @@
 /**
  * @file AW20036.c
- * @author your name (you@domain.com)
- * @brief 
+ * @author Orion Serup (oserup@proton.me)
+ * @brief Contains the Implementation of the AW20036 Functionality
  * @version 0.1
  * @date 2022-12-23
  * 

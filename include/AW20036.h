@@ -18,30 +18,35 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// ------------------------------------------------ Global Defines ------------------------------------------------ //
+
 #define AW20036_MAX_LED 0x35
+#define AW20036_PAGE_SELECT 0xF0
+
+// ---------------------------------------------------- Page Definitions ------------------------------------------- //
 
 /// @brief 
 typedef enum AW20036PAGE {
 
-    AW20036_FUNCTION_PAGE           = 0xC0,
-    AWS20036_DIM_CURR_PAGE          = 0xC1,
-    AW20036_FADE_CURR_PAGE          = 0xC2,
-    AW20036_PATTERN_SEL_PAGE        = 0xC3,
-    AW20036_DIM_FADE_PAGE           = 0xC4,
-    AW20036_DIM_PATTERN_FADE_PAGE   = 0xC5
+    AW20036_FUNCTION_PAGE           = 0xC0, ///< The first page, constains all of the config and informational registers
+    AWS20036_DIM_CURR_PAGE          = 0xC1, ///< The second page contains individually addressable and writable dim values for each LED
+    AW20036_FADE_CURR_PAGE          = 0xC2, ///< The third page contains individually addresable and writable fade values for each LED
+    AW20036_PATTERN_SEL_PAGE        = 0xC3, ///< The fourth page contains indivually addressable and writable pattern values for each LED
+    AW20036_DIM_FADE_PAGE           = 0xC4, ///< The fifth page contains indivually addressable and writable dim and fade values for each LED
+    AW20036_DIM_PATTERN_FADE_PAGE   = 0xC5  ///< The sixth page contains individually addressable and writable dim, pattern, and fade values for each LED
 
 } AW20036Page;
 
-#define AW20036_PAGE_SELECT 0xF0
+// ----------------------------------------------- Function Register Definitions -------------------------------------------- //
 
 /// @brief 
 typedef enum AW20036FUNCTION {
 
-    AW20036_ID      = 0x00,
-    AW20036_SLPCR   = 0x01,
-    AW20036_RSTR    = 0x02,
-    AW20036_GCCR    = 0x03,
-    AW20036_FCD     = 0x04,
+    AW20036_ID      = 0x00, ///< Device ID
+    AW20036_SLPCR   = 0x01, ///< Device Sleep Settings
+    AW20036_RSTR    = 0x02, ///< Device Software reset
+    AW20036_GCCR    = 0x03, ///< Device Global Config 
+    AW20036_FCD     = 0x04, ///< Device 
     AW20036_CLKSYS  = 0x05,
     AW20036_FLTCFG1 = 0x09,
     AW20036_FLTCFG2 = 0x0A,
@@ -78,6 +83,8 @@ typedef enum AW20036FUNCTION {
     AW20036_SIZE    = 0x80
 
 } AW20036Function;
+
+// ------------------------------------------ Configuration Enum and Structs --------------------------------------- //
 
 /// @brief 
 typedef enum AW20036CURRENT {
@@ -172,6 +179,8 @@ typedef struct AW20036LEDSTATE {
 
 } AW20036LEDState;
 
+// ----------------------------------------------------- Pattern Structs ---------------------------------------------------- //
+
 /// @brief 
 typedef struct AW20036PATTERN {
 
@@ -200,6 +209,8 @@ typedef struct AW20036PATTERNSSTATE {
 
 } AW20036PatternsState;
 
+// --------------------------------------------------- LED Value Structs --------------------------------------------- //
+
 typedef struct AW20036DIMFADE {
 
     uint8_t dim: 6;
@@ -214,6 +225,8 @@ typedef struct AW20036PATDIMFADE {
     uint8_t fade;
 
 } AW20036PatDimFade;
+
+// ----------------------------------------------------- HAL and Device Structs ---------------------------------------- //
 
 /// @brief 
 typedef struct AW20036HAL {
@@ -445,7 +458,6 @@ uint8_t AW20036WriteLEDsFade(const AW20036* const dev, const uint8_t led_low, co
  * @return uint8_t 
  */
 uint8_t AW20036WriteLEDsPatDimFade(const AW20036* const dev, const uint8_t led_low, const uint8_t led_high, const AW20036PatDimFade* const pat_dim_fade);
-
 
 // --------------------------------------------------------- Low Level Exposed API ------------------------------------------- //
 
